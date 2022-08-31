@@ -13,9 +13,25 @@ class ViewController: UIViewController {
     
     var round = 0
     
-    let alphabet: [String] = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M"]
+    var keyboards = [["A", "Z", "T", "L", "R", "U", "I", "M", "F"], ["L", "E", "B", "P", "A", "N", "G", "C", "A"], ["H", "W", "U", "L", "S", "T", "B", "N", "R", "E", "G", "I"]]
+    
     
     var userWord: [String] = []
+    
+    var starCount = 0
+    
+    var starLabel: UILabel = {
+        let view = UILabel()
+        view.text = "0"
+        view.font = view.font.withSize(25)
+        return view
+    }()
+    
+    var starImageView: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage(systemName: "star.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 25, weight: .semibold, scale: .large))
+        return view
+    }()
     
     var imageContainerView: UIView = {
         let view = UIView()
@@ -69,6 +85,9 @@ class ViewController: UIViewController {
     var guessButton = UIButton()
     
     var resultView = UIView()
+    
+    var guessCount = 0
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -79,6 +98,17 @@ class ViewController: UIViewController {
 
     func layout() {
         let imageContainerViewWidth = view.frame.width - 60
+        
+        view.addSubview(starLabel)
+        starLabel.translatesAutoresizingMaskIntoConstraints = false
+        starLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 45).isActive = true
+        starLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -60).isActive = true
+        
+        
+        view.addSubview(starImageView)
+        starImageView.translatesAutoresizingMaskIntoConstraints = false
+        starImageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 40).isActive = true
+        starImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10).isActive = true
         
         
         view.addSubview(imageContainerView)
@@ -181,8 +211,26 @@ class ViewController: UIViewController {
     
     @objc func deleteLast() {
         if userWord.count > 0 {
+            var j = 0
+            var index = 0
+            
+            for i in 0..<keyboards[round].count {
+                if j == userWord.count {
+                    keyboards[round][index] = userWord[userWord.count - 1]
+                }
+                if keyboards[round][i] == "" && i == keyboards[round].count - 1 {
+                    j += 1
+                    index = i
+                    keyboards[round][index] = userWord[userWord.count - 1]
+                } else if keyboards[round][i] == "" {
+                    j += 1
+                    index = i
+                }
+            }
+            
             userWord.removeLast()
             userLettersCollectionView.reloadData()
+            lettersCollectionView.reloadData()
         }
     }
     
@@ -190,31 +238,77 @@ class ViewController: UIViewController {
         let userGuess = userWord.reduce("", +)
         
         if userGuess == gameLevels[round].answer {
-            self.resultView.isHidden = false
-            self.resultView.backgroundColor = UIColor.green.withAlphaComponent(0.5)
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                self.resultView.isHidden = true
-                
-                self.round += 1
-                self.imageViewOne.image = self.gameLevels[self.round].img1
-                self.imageViewTwo.image = self.gameLevels[self.round].img2
-                self.imageViewThree.image = self.gameLevels[self.round].img3
-                self.imageViewFour.image = self.gameLevels[self.round].img4
-                
-                self.userWord.removeAll()
-                self.userLettersCollectionView.reloadData()
+            guessCount += 1
+            
+            let alert = UIAlertController(title: "Correct!", message: "Number of guesses: \(guessCount). Stars: +\(10 - (guessCount - 1) * 2)", preferredStyle: .alert)
+            
+            let againBtn = UIAlertAction(title: "Again", style: .destructive) { [self] action in
+                for i in 0..<userWord.count {
+                    deleteLast()
+                }
+                userWord.removeAll()
+                starCount = 0
+                userLettersCollectionView.reloadData()
             }
+            let nextBtn = UIAlertAction(title: "Next", style: .default) { [self] action in
+                round += 1
+                
+                imageViewOne.image = gameLevels[round].img1
+                imageViewTwo.image = gameLevels[round].img2
+                imageViewThree.image = gameLevels[round].img3
+                imageViewFour.image = gameLevels[round].img4
+                starLabel.text = String(starCount)
+                
+                userWord.removeAll()
+                userLettersCollectionView.reloadData()
+                lettersCollectionView.reloadData()
+            }
+            
+            alert.addAction(againBtn)
+            alert.addAction(nextBtn)
+            
+            present(alert, animated: true)
+            
+            starCount += 10 - (guessCount - 1) * 2
+            
+            guessCount = 0
+            
+            
+
         } else {
-            self.resultView.isHidden = false
-            self.resultView.backgroundColor = UIColor.red.withAlphaComponent(0.5)
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                self.resultView.isHidden = true
+            let alert = UIAlertController(title: "Wrong!", message: "Your guess is wrong", preferredStyle: .alert)
+            
+            let againBtn = UIAlertAction(title: "Again", style: .destructive) { [self] action in
+                for i in 0..<userWord.count {
+                    deleteLast()
+                }
+                userWord.removeAll()
+                userLettersCollectionView.reloadData()
                 
-                self.userWord.removeAll()
-                self.userLettersCollectionView.reloadData()
+                lettersCollectionView.reloadData()
             }
+            let nextBtn = UIAlertAction(title: "Next", style: .default) { [self] action in
+                round += 1
+                
+                imageViewOne.image = gameLevels[round].img1
+                imageViewTwo.image = gameLevels[round].img2
+                imageViewThree.image = gameLevels[round].img3
+                imageViewFour.image = gameLevels[round].img4
+                
+                userWord.removeAll()
+                guessCount = 0
+                userLettersCollectionView.reloadData()
+                lettersCollectionView.reloadData()
+            }
+            
+            alert.addAction(againBtn)
+            alert.addAction(nextBtn)
+            
+            present(alert, animated: true)
+            
+            guessCount += 1
         }
     }
 }
@@ -223,7 +317,7 @@ class ViewController: UIViewController {
 extension ViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if collectionView == lettersCollectionView {
-            return alphabet.count
+            return keyboards[round].count
         } else {
             return userWord.count
         }
@@ -233,12 +327,18 @@ extension ViewController: UICollectionViewDataSource {
         let cell = lettersCollectionView.dequeueReusableCell(withReuseIdentifier: "letter-cell", for: indexPath) as! LetterCell
         
         if collectionView == lettersCollectionView {
-            cell.letterLabel.text = alphabet[indexPath.row]
-            cell.backgroundColor = .orange
-            cell.layer.cornerRadius = 10
-            cell.letterLabel.textColor = .white
-            cell.userWordBackground.isHidden = true
-            cell.letterLabel.font = cell.letterLabel.font.withSize(20)
+            cell.letterLabel.text = keyboards[round][indexPath.row]
+            
+            if cell.letterLabel.text == "" {
+                cell.isHidden = true
+            } else {
+                cell.isHidden = false
+                cell.backgroundColor = .orange
+                cell.layer.cornerRadius = 10
+                cell.letterLabel.textColor = .white
+                cell.userWordBackground.isHidden = true
+                cell.letterLabel.font = cell.letterLabel.font.withSize(20)
+            }
         } else {
             cell.letterLabel.text = userWord[indexPath.row]
             cell.backgroundColor = .black
@@ -264,8 +364,10 @@ extension ViewController:UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if collectionView == lettersCollectionView {
             if userWord.count < 10 {
-                userWord.append(alphabet[indexPath.row])
+                userWord.append(keyboards[round][indexPath.row])
                 userLettersCollectionView.reloadData()
+                keyboards[round][indexPath.row] = ""
+                lettersCollectionView.reloadData()
             }
         }
     }

@@ -64,11 +64,11 @@
 				32EFF35228B90BBB00A67369 /* SceneDelegate.swift */,
 				32EFF35428B90BBB00A67369 /* ViewController.swift */,
 				3230466B28B9140B0076DCDD /* LetterCell.swift */,
+				32A418DD28B9D78A00E487F7 /* GameLevel.swift */,
 				32EFF35628B90BBB00A67369 /* Main.storyboard */,
 				32EFF35928B90BBC00A67369 /* Assets.xcassets */,
 				32EFF35B28B90BBC00A67369 /* LaunchScreen.storyboard */,
 				32EFF35E28B90BBC00A67369 /* Info.plist */,
-				32A418DD28B9D78A00E487F7 /* GameLevel.swift */,
 			);
 			path = 3monthlesson5;
 			sourceTree = "<group>";
